@@ -1,145 +1,68 @@
-# 💡 Glass Button Card
+# Activity Feed Card
 
-Eine hochgradig konfigurierbare Button-Card für Home Assistant im modernen Glasmorphism-Stil – komplett über einen visuellen Editor einstellbar. Icons reagieren automatisch auf den Zustand der Entität.
+A Lovelace card for Home Assistant that shows one timeline of what just happened: entity changes, upcoming calendar events and persistent notifications. No dependencies, one JavaScript file, a visual editor included.
 
-## ✨ Features
+![Activity Feed Card](https://raw.githubusercontent.com/JUDESTRAHM/activity-feed-card/main/screenshot.png)
 
-- **Visueller Editor** – alles per Maske einstellbar, kein YAML nötig
-- **4 Designs** – Glas, Vollfläche, Umrandet, Minimal
-- **Einstellbare Leuchtkraft** – Glow-Effekt an/aus und Intensität per Regler
-- **Frei wählbare Aktion** – Ein-/Ausschalten, zu Seite navigieren, Info-Fenster öffnen, Dienst auslösen oder Webseite öffnen
-- **Hold-Aktion** – eigene Aktion bei langem Drücken, im Editor einstellbar
-- **Zustandsabhängige Icons** – eigenes Icon für aktiven Zustand, wechselt automatisch wenn die Entität an/offen/aktiv ist
-- **Anpassbare Aktiv-Farbe** – Button, Icon und Glow nehmen deine Wunschfarbe an
-- **Schwellenwert-Leuchten** – leuchtet in eigener Farbe wenn ein Messwert eine Bedingung erfüllt (z.B. Temperatur > 25°C)
-- **Optionale Anzeige** von Name und Zustand/Wert
+_The screenshot is rendered from a mocked `hass` object in a test page (see `test/`)._
 
-## 📦 Installation
+## Install
 
-### Über HACS (Custom Repository)
+HACS: open HACS, search for "Activity Feed Card" under Frontend, download, reload the browser.
 
-1. HACS → Frontend → ⋮ → **Custom Repositories**
-2. URL: `https://github.com/pquandel2-alt/glass-button-card`
-3. Kategorie: **Lovelace**
-4. Hinzufügen → **Herunterladen** → Browser neu laden
+Manual: copy `activity-feed-card.js` to `config/www/`, then add a dashboard resource `/local/activity-feed-card.js` of type `JavaScript module`.
 
-### Manuell
+## Use
 
-1. `glass-button-card.js` nach `/config/www/` kopieren
-2. In `configuration.yaml` eintragen:
+Add the card from the dashboard card picker ("Activity Feed Card") and use the visual editor, or in YAML:
 
 ```yaml
-lovelace:
-  resources:
-    - url: /local/glass-button-card.js
-      type: module
+type: custom:activity-feed-card
+title: Home activity
+entities:
+  - binary_sensor.front_door
+  - entity: lock.back_door
+    name: Back door
+    more_info_on_tap: false
+calendars:
+  - calendar.family
+id_filter: ^binary_sensor\.motion_
+max_item_count: 20
 ```
 
-## 🚀 Verwendung
+| Option | Default | Description |
+| --- | --- | --- |
+| `title` | `Activity` | Card title. Empty string hides it. |
+| `entities` | `[]` | Entity ids, or objects with `entity`, `name`, `icon`, `more_info_on_tap`. |
+| `id_filter` | none | Regular expression. Every entity whose id matches is added. |
+| `calendars` | `[]` | Calendar entities. `calendar` is accepted as an alias. |
+| `days_ahead` | `7` | How far ahead to show calendar events. |
+| `show_notifications` | `true` | Include persistent notifications. |
+| `max_item_count` | `20` | Maximum rows. |
+| `show_icons` | `true` | Show the icon column. |
+| `state_color` | `true` | Colour icons of active entities. |
+| `more_info_on_tap` | `true` | Tap a row to open the entity dialog. |
+| `show_empty` | `true` | When false the card hides itself with no rows. |
+| `empty_text` | `Nothing to show` | Text for an empty card. |
 
-Am einfachsten über den **visuellen Editor**: Card hinzufügen → „Glass Button Card" → alles per Maske einstellen.
+Rows are sorted by timestamp, newest first. Entity rows use the entity's `last_changed`, notifications use their creation time, calendar events use their start time (so upcoming events sit at the top).
 
-Oder per YAML:
+## Coming from `home-feed-card`
 
-```yaml
-type: custom:glass-button-card
-entity: light.wohnzimmer
-name: Wohnzimmer
-design: glass
-icon: mdi:lightbulb
-icon_active: mdi:lightbulb-on
-glow: true
-glow_intensity: 12
-active_color: '#ffd54f'
-show_name: true
-tap_action:
-  action: toggle
+The option names `title`, `entities`, `calendars`, `id_filter`, `max_item_count`, `show_empty`, `more_info_on_tap` and `state_color` carry over, so for simple setups you can change `type: custom:home-feed-card` to `type: custom:activity-feed-card`. Options this card does not implement (for example `card_id`, `multiple_items`, `content_template`) are ignored. This is an independent project and not affiliated with that card.
+
+## Known limits
+
+- The visual editor edits plain entity ids. Rows written in object form (custom name or icon) are kept in YAML; switch to the code editor for those.
+- Tested with a mocked `hass` object in jsdom and headless Chromium. Not yet tested on a live Home Assistant install; please open an issue if something differs on yours.
+
+## Development
+
+```
+npm install
+npm test
 ```
 
-## ⚙️ Konfiguration
-
-| Option | Typ | Standard | Beschreibung |
-|--------|-----|----------|--------------|
-| `entity` | string | – | Zu steuernde / anzuzeigende Entität |
-| `name` | string | Entitätsname | Eigener Text unter dem Icon |
-| `design` | string | `glass` | `glass`, `solid`, `outline`, `minimal` |
-| `active_color` | string | `#ffd54f` | Farbe wenn aktiv (Hex) |
-| `glow` | bool | `true` | Leuchteffekt wenn aktiv |
-| `glow_intensity` | number | `12` | Stärke des Leuchtens (0–40) |
-| `icon` | string | `mdi:lightbulb` | Standard-Icon |
-| `icon_active` | string | – | Icon wenn aktiv |
-| `icon_inactive` | string | – | Icon wenn inaktiv (optional) |
-| `show_name` | bool | `true` | Name anzeigen |
-| `show_state` | bool | `false` | Zustand/Wert anzeigen |
-| `icon_size` | number | `24` | Icon-Größe in px |
-| `height` | number | – | Feste Höhe in px |
-| `border_radius` | number | `16` | Eckenradius in px |
-| `tap_action` | object | `{action: toggle}` | Aktion bei Tippen |
-| `hold_action` | object | – | Aktion bei langem Drücken |
-| `threshold` | number | – | Schwellenwert für Leuchten (z.B. `25`) |
-| `threshold_operator` | string | `>=` | Vergleichsoperator: `>=` `>` `<=` `<` `==` |
-| `threshold_color` | string | `#FF6B35` | Leuchtfarbe bei Schwellenwert-Überschreitung |
-
-### Aktions-Typen
-
-```yaml
-# Ein-/Ausschalten
-tap_action:
-  action: toggle
-
-# Navigieren
-tap_action:
-  action: navigate
-  navigation_path: /lovelace/wohnzimmer
-
-# Info-Fenster
-tap_action:
-  action: more-info
-
-# Dienst auslösen
-tap_action:
-  action: call-service
-  service: switch.toggle
-  target:
-    entity_id: switch.steckdose
-
-# Webseite öffnen
-tap_action:
-  action: url
-  url_path: https://...
-```
-
-### Schwellenwert-Leuchten
-
-Leuchtet in einer eigenen Farbe sobald der Messwert der Entität eine Bedingung erfüllt. Nützlich z.B. für Temperatursensoren, Stromverbrauch oder CO₂-Werte. Der Schwellenwert hat Vorrang vor der normalen Aktiv-Farbe.
-
-```yaml
-# Leuchtet orange wenn Temperatur 25°C oder mehr erreicht
-entity: sensor.temperatur_wohnzimmer
-threshold: 25
-threshold_operator: ">="
-threshold_color: "#FF6B35"
-
-# Leuchtet rot wenn Verbrauch über 2000 W
-entity: sensor.stromverbrauch
-threshold: 2000
-threshold_operator: ">"
-threshold_color: "#F44336"
-```
-
-## 🎨 Designs
-
-| Design | Beschreibung |
-|--------|--------------|
-| `glass` | Glasmorphism – transparent mit Blur |
-| `solid` | Gefüllte Fläche |
-| `outline` | Nur Umrandung, transparenter Hintergrund |
-| `minimal` | Flach, ohne Rahmen |
-
-## 🔆 Zustandserkennung
-
-Der Button gilt als „aktiv" wenn der Zustand der Entität einer von diesen ist: `on`, `open`, `home`, `playing`, `active`, `heat`, `cool`, `auto`, `heat_cool`, `cleaning`, `returning`, `detected`, `unlocked`, `present`. In diesem Fall werden Aktiv-Farbe, Aktiv-Icon und Glow angewendet.
-
-## 📄 Lizenz
+## License
 
 MIT
